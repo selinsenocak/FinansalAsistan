@@ -37,7 +37,6 @@ class FinansalAsistanApp extends StatelessWidget {
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
       ],
       home: app.authed ? const AdaptiveShell() : const AuthScreen(),
     );

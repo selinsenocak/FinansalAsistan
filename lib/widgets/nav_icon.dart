@@ -33,5 +33,3 @@ const IconData kIconLogout = Icons.logout;
 const IconData kIconPlus = Icons.add;
 const IconData kIconSun = Icons.wb_sunny_outlined;
 const IconData kIconMoon = Icons.nightlight_round;
-const IconData kIconPhone = Icons.phone_iphone;
-const IconData kIconMonitor = Icons.desktop_windows_outlined;

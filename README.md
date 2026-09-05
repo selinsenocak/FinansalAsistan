@@ -3,17 +3,18 @@
 Gelir ve giderlerin kategori bazlı takip edildiği, harcama dağılımının
 görselleştirildiği ve güncel piyasa verilerinin (döviz, altın, BIST) tek
 ekranda gösterildiği bir kişisel finans uygulaması. Flutter ile
-geliştirilmiştir; tek kod tabanından hem **Web** hem **iOS** hedefler,
-telefon genişliğinde alt gezinme çubuğu, geniş ekranlarda kenar
-çubuklu bir web düzeni kullanır (bkz. `lib/widgets/adaptive_shell.dart`).
+geliştirilmiştir ve **Web** hedefler; dar pencerelerde alt gezinme
+çubuğu, geniş pencerelerde kenar çubuklu bir düzen kullanan tek bir
+duyarlı (responsive) arayüzü vardır (bkz.
+`lib/widgets/adaptive_shell.dart`).
 
 Bu sürüm bir prototip / çalışır temel sistemdir — production değildir
-(bkz. `uploads/intent-2.md` kapsam dışı maddeleri: gerçek banka
-entegrasyonu, production seviye kimlik doğrulama, push bildirimleri yok).
+(gerçek banka entegrasyonu, production seviye kimlik doğrulama, push
+bildirimleri kapsam dışıdır).
 
-Bu proje, `Finansal Asistan.dc.html` altında Claude Design'da hazırlanan
-etkileşimli prototipten (Modernist tasarım sistemi tokenlarıyla)
-yola çıkılarak gerçek bir Flutter uygulamasına dönüştürülmüştür.
+Bu proje, Claude Design'da hazırlanan etkileşimli bir prototipten
+(Modernist tasarım sistemi tokenlarıyla) yola çıkılarak gerçek bir
+Flutter uygulamasına dönüştürülmüştür.
 
 ## Kurulum
 
@@ -26,27 +27,24 @@ Flutter SDK kurulu değilse: https://docs.flutter.dev/get-started/install
 ## Çalıştırma
 
 ```bash
-flutter devices          # bağlı cihaz/simülatörleri listeler
-flutter run -d chrome    # Web (localhost)
-flutter run              # bağlı bir iOS simülatörü/cihazı seçerek
+flutter run -d chrome        # Chrome yüklüyse
+flutter run -d web-server    # Chrome gerekmeden, verilen localhost adresinden
 ```
-
-iOS için Xcode ve bir Mac ortamı gerekir; `flutter run` ilk seferde
-gerekli derlemeyi kendisi yapar.
 
 ## Test
 
 ```bash
 flutter analyze   # statik analiz
 flutter test      # widget testleri — auth akışı + her ekranın her demo
-                   # kullanıcı ve her iki genişlik kırılımında (telefon /
-                   # geniş ekran) hatasız render edildiğini doğrular
+                   # kullanıcı ve her iki genişlik kırılımında (dar
+                   # pencere / geniş pencere) hatasız render edildiğini
+                   # doğrular
 ```
 
 ## Demo hesaplar
 
-Giriş ekranındaki üç demo hesap, `uploads/intent-2.md`'de tanımlanan
-profilleri yansıtır (bkz. `lib/data/demo_data.dart`):
+Giriş ekranındaki üç demo hesap farklı gelir profillerini yansıtır
+(bkz. `lib/data/demo_data.dart`):
 
 | Hesap | Profil |
 |---|---|
@@ -71,13 +69,11 @@ defterle başlar.
 - **Piyasa verileri**: `lib/services/market_service.dart`, USD/TRY ve
   EUR/TRY için ücretsiz, anahtarsız `@fawazahmed0/currency-api`
   aynasından canlı veri çeker (bugün/dün karşılaştırmasıyla değişim
-  yüzdesi). Altın ve BIST 100 için ücretsiz/anahtarsız bir kaynak
-  bulunmadığından referans değerlerde kalır — gerçek bir sağlayıcı
-  bağlanacaksa bu dosya güncellenmelidir. Ağ isteği başarısız olursa
-  ekran hiçbir zaman boş kalmaz, son bilinen/varsayılan değerler
-  gösterilir.
+  yüzdesi) ve her 5 dakikada bir otomatik yeniler. Altın ve BIST 100
+  için ücretsiz/anahtarsız bir kaynak bulunmadığından referans
+  değerlerde kalır — gerçek bir sağlayıcı bağlanacaksa bu dosya
+  güncellenmelidir. Ağ isteği başarısız olursa ekran hiçbir zaman boş
+  kalmaz, son bilinen/varsayılan değerler gösterilir.
 - **Tasarım sistemi**: Renk tokenları, tipografi ve bileşen stilleri
-  `lib/theme/palette.dart` ve `lib/theme/app_theme.dart` içinde,
-  orijinal prototipin `getTokens()` fonksiyonu ve
-  `uploads/design-3.md` renk spesifikasyonuyla birebir eşleşecek
-  şekilde tanımlıdır (Archivo yazı tipi, koyu/aydınlık tema).
+  `lib/theme/palette.dart` ve `lib/theme/app_theme.dart` içinde
+  tanımlıdır (Archivo yazı tipi, koyu/aydınlık tema).
