@@ -41,20 +41,35 @@ flutter test      # widget testleri — auth akışı + her ekranın her demo
                    # doğrular
 ```
 
-## Demo hesaplar
+## Hesaplar
 
-Giriş ekranındaki üç demo hesap farklı gelir profillerini yansıtır
-(bkz. `lib/data/demo_data.dart`):
+Giriş ekranı iki tür hesap listeler, ikisi de bu tarayıcının yerel
+deposunda (`shared_preferences` → web'de `localStorage`) kalıcı olarak
+saklanır — sunucu yok, veriler yalnızca o tarayıcıda yaşar:
 
-| Hesap | Profil |
-|---|---|
-| Ayşe Kaya | Düzenli maaşlı kullanıcı — sabit aylık maaş, düzenli gider |
-| Mert Demir | Freelance / değişken gelirli — aydan aya değişen proje ödemeleri |
-| Elif Şahin | Dar bütçeli kullanıcı — düşük gelir, yüksek gider/gelir oranı |
+- **Demo hesaplar** (bkz. `lib/data/demo_data.dart`) — farklı gelir
+  profillerini gösteren, koda gömülü üç örnek hesap:
 
-Her hesabın Temmuz–Eylül 2026 arası gerçekçi bir gelir/gider geçmişi
-önceden yüklüdür; "Kayıt Ol" ile oluşturulan yeni bir hesap ise boş bir
-defterle başlar.
+  | Hesap | Profil |
+  |---|---|
+  | Ayşe Kaya | Düzenli maaşlı kullanıcı — sabit aylık maaş, düzenli gider |
+  | Mert Demir | Freelance / değişken gelirli — aydan aya değişen proje ödemeleri |
+  | Elif Şahin | Dar bütçeli kullanıcı — düşük gelir, yüksek gider/gelir oranı |
+
+  Her biri Temmuz–Eylül 2026 arası gerçekçi bir gelir/gider geçmişiyle
+  başlar; o hesapla yapılan değişiklikler de kalıcı olarak saklanır.
+
+- **Kayıtlı hesaplar** — "Kayıt Ol" ile oluşturulan, ad/e-posta/şifre
+  içeren hesaplar. Sayıları **sınırsızdır**; her biri boş bir defterle
+  başlar. "Giriş Yap" bu hesapların e-posta/şifresiyle gerçekten
+  eşleştirilir (yanlış şifre veya bulunamayan e-posta hata mesajı
+  gösterir; aynı e-posta ile ikinci kez kayıt reddedilir).
+
+Her hesap satırının yanındaki simge o hesabı listeden **kaldırır**:
+demo hesaplarda bu geri alınabilir bir gizlemedir ("Gizlenen demo
+hesapları geri getir" ile geri gelir); kayıtlı hesaplarda ise onay
+istenen, **kalıcı bir silmedir** (hesap ve tüm gelir/gider/hedef
+verisi bir daha geri gelmez).
 
 ## Mimari notları
 
@@ -77,3 +92,10 @@ defterle başlar.
 - **Tasarım sistemi**: Renk tokenları, tipografi ve bileşen stilleri
   `lib/theme/palette.dart` ve `lib/theme/app_theme.dart` içinde
   tanımlıdır (Archivo yazı tipi, koyu/aydınlık tema).
+- **Hesap depolama**: `lib/services/account_store.dart`, hesap listesini
+  ve her hesabın defterini `shared_preferences` (web'de `localStorage`)
+  üzerinde JSON olarak saklar. `lib/services/prefs.dart`'taki kısa
+  zaman aşımı, `shared_preferences`'ın platform kanalının hiç
+  yanıtlamadığı ortamlarda (ör. bazı test çalıştırıcıları) uygulamanın
+  sonsuza kadar askıda kalmak yerine zarifçe bellek-içi moda düşmesini
+  sağlar — gerçek web hedefinde bu yol zaten anında sonuçlanır.

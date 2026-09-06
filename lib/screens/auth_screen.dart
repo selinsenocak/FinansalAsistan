@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../data/demo_data.dart';
-import '../models/demo_user.dart';
+import '../models/account_record.dart';
 import '../state/app_screen.dart';
 import '../state/app_state.dart';
 import '../theme/app_theme.dart';
@@ -144,6 +143,31 @@ class _AuthForm extends StatelessWidget {
     required this.signupPasswordCtrl,
   });
 
+  Future<void> _confirmDelete(BuildContext context, AccountRecord acc) async {
+    if (acc.isDemo) {
+      // Reversible (see "Gizlenen demo hesapları geri getir") — no need
+      // to interrupt with a confirmation dialog.
+      app.removeAccount(acc.id);
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: p.surface,
+        title: Text('Hesabı sil', style: headingStyle(p, size: 16)),
+        content: Text(
+          '"${acc.name}" hesabını ve tüm gelir/gider/hedef verilerini kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+          style: bodyStyle(p, size: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sil')),
+        ],
+      ),
+    );
+    if (confirmed == true) app.removeAccount(acc.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLogin = app.authMode == AuthMode.login;
@@ -175,6 +199,10 @@ class _AuthForm extends StatelessWidget {
           AppTextField(palette: p, controller: emailCtrl, hint: 'E-posta'),
           const SizedBox(height: 10),
           AppTextField(palette: p, controller: passwordCtrl, hint: 'Şifre', obscure: true),
+          if (app.loginError != null) ...[
+            const SizedBox(height: 8),
+            Text(app.loginError!, style: bodyStyle(p, size: 12, color: p.tone(SemanticToken.danger))),
+          ],
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -183,7 +211,7 @@ class _AuthForm extends StatelessWidget {
               palette: p,
               background: p.tone(SemanticToken.primary),
               foreground: Colors.white,
-              onPressed: app.loginGeneric,
+              onPressed: () => app.loginWithCredentials(emailCtrl.text, passwordCtrl.text),
               padding: const EdgeInsets.symmetric(vertical: 13),
             ),
           ),
@@ -193,6 +221,10 @@ class _AuthForm extends StatelessWidget {
           AppTextField(palette: p, controller: signupEmailCtrl, hint: 'E-posta'),
           const SizedBox(height: 10),
           AppTextField(palette: p, controller: signupPasswordCtrl, hint: 'Şifre', obscure: true),
+          if (app.signupError != null) ...[
+            const SizedBox(height: 8),
+            Text(app.signupError!, style: bodyStyle(p, size: 12, color: p.tone(SemanticToken.danger))),
+          ],
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -201,10 +233,30 @@ class _AuthForm extends StatelessWidget {
               palette: p,
               background: p.tone(SemanticToken.primary),
               foreground: Colors.white,
-              onPressed: () => app.signup(nameCtrl.text),
+              onPressed: () => app.signup(
+                name: nameCtrl.text,
+                email: signupEmailCtrl.text,
+                password: signupPasswordCtrl.text,
+              ),
               padding: const EdgeInsets.symmetric(vertical: 13),
             ),
           ),
+        ],
+        if (app.visibleCustomAccounts.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          Container(height: 2, color: p.divider),
+          const SizedBox(height: 16),
+          Text('KAYITLI HESAPLARIM', style: bodyStyle(p, size: 12, color: p.textMuted, weight: FontWeight.w600)),
+          const SizedBox(height: 10),
+          ...app.visibleCustomAccounts.map((acc) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _AccountTile(
+                  account: acc,
+                  p: p,
+                  onTap: () => app.loginWithAccount(acc),
+                  onDelete: () => _confirmDelete(context, acc),
+                ),
+              )),
         ],
         const SizedBox(height: 20),
         Container(height: 2, color: p.divider),
@@ -214,10 +266,25 @@ class _AuthForm extends StatelessWidget {
           style: bodyStyle(p, size: 12, color: p.textMuted, weight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        ...kDemoUsers.map((u) => Padding(
+        ...app.visibleDemoAccounts.map((acc) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _DemoUserTile(user: u, p: p, onTap: () => app.loginWithDemo(u)),
+              child: _AccountTile(
+                account: acc,
+                p: p,
+                onTap: () => app.loginWithAccount(acc),
+                onDelete: () => app.removeAccount(acc.id),
+              ),
             )),
+        if (app.hasHiddenDemoAccounts) ...[
+          const SizedBox(height: 4),
+          TextButton(
+            onPressed: app.restoreDemoAccounts,
+            child: Text(
+              'Gizlenen demo hesapları geri getir',
+              style: bodyStyle(p, size: 12, color: p.tone(SemanticToken.primary)),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -251,44 +318,67 @@ class _ModeTab extends StatelessWidget {
   }
 }
 
-class _DemoUserTile extends StatelessWidget {
-  final DemoUser user;
+class _AccountTile extends StatelessWidget {
+  final AccountRecord account;
   final Palette p;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
-  const _DemoUserTile({required this.user, required this.p, required this.onTap});
+  const _AccountTile({required this.account, required this.p, required this.onTap, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: p.surface,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(border: Border.all(color: p.border)),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                alignment: Alignment.center,
-                color: p.softTone(SemanticToken.primary),
-                child: Icon(kIconUser, size: 16, color: p.onSoftTone(SemanticToken.primary)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(user.name, style: headingStyle(p, size: 13, weight: FontWeight.w700)),
-                    Text(user.role, style: bodyStyle(p, size: 11, color: p.textMuted)),
-                  ],
+    return Container(
+      decoration: BoxDecoration(border: Border.all(color: p.border)),
+      child: Row(
+        children: [
+          Expanded(
+            child: Material(
+              color: p.surface,
+              child: InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        color: p.softTone(SemanticToken.primary),
+                        child: Icon(kIconUser, size: 16, color: p.onSoftTone(SemanticToken.primary)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(account.name, style: headingStyle(p, size: 13, weight: FontWeight.w700)),
+                            Text(account.role, style: bodyStyle(p, size: 11, color: p.textMuted)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          Material(
+            color: p.surface,
+            child: InkWell(
+              onTap: onDelete,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: Icon(
+                  account.isDemo ? Icons.visibility_off_outlined : Icons.delete_outline,
+                  size: 18,
+                  color: p.textMuted,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

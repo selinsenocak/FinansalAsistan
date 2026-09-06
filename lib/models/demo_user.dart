@@ -1,11 +1,12 @@
-import 'app_user.dart';
 import 'expense_entry.dart';
 import 'goal.dart';
 import 'income_entry.dart';
 
-/// One selectable demo account on the auth screen. `incomes`/`expenses`/
-/// `goals` are factories (not fixed lists) so every login starts from a
-/// clean copy of the seed data, even if a previous session edited it.
+/// One demo profile's seed data. Only used to seed an [AccountRecord]
+/// (see `account_record.dart`) the first time its ledger is opened —
+/// after that, edits are persisted like any other account.
+/// `incomes`/`expenses`/`goals` are factories (not fixed lists) so
+/// re-seeding always starts from a clean copy.
 class DemoUser {
   final String id;
   final String name;
@@ -22,6 +23,4 @@ class DemoUser {
     required this.seedExpenses,
     required this.seedGoals,
   });
-
-  AppUser toAppUser() => AppUser(id: id, name: name, role: role, isDemo: true);
 }

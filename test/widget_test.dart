@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:finansal_asistan/screens/auth_screen.dart';
 import 'package:finansal_asistan/state/app_state.dart';
@@ -42,6 +43,15 @@ const _navLabels = [
 ];
 
 void main() {
+  // shared_preferences has no real platform channel in the plain test
+  // runner; without this, AppState's persistence reads (theme, accounts)
+  // hang forever instead of failing fast, since the underlying platform
+  // call never replies at all. This registers the package's own in-memory
+  // test backend so it resolves immediately, like it would on web.
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets('Auth screen shows the three demo accounts', (tester) async {
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
